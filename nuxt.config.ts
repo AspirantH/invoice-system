@@ -3,7 +3,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
 
-  // 🔥 关闭 SSR 但保留服务端 API（关键！）
+  // 🔥 强制 SPA 静态页面（给 Tauri 用）
   ssr: false,
 
   devServer: {
@@ -11,7 +11,6 @@ export default defineNuxtConfig({
   },
 
   modules: ['@nuxtjs/tailwindcss'],
-
   css: ['~/assets/css/main.css'],
 
   typescript: {
@@ -35,6 +34,11 @@ export default defineNuxtConfig({
   },
 
   nitro: {
-    preset: "node-server"
+    // 生成纯前端 index.html
+    output: {
+      dir: '.output/public'
+    },
+    // 保留 API 服务
+    preset: 'node-server'
   }
 })
