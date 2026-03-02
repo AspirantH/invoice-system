@@ -1,4 +1,4 @@
-name: 构建绿色版并发布到 Releases
+name: 构建完整绿色版并发布到Releases
 on:
   workflow_dispatch:
 
@@ -22,24 +22,27 @@ jobs:
       - name: 构建项目
         run: npm run build
 
-      # 🔥 关键：先把需要的文件移动到统一文件夹
-      - name: 准备发布文件
+      # 创建启动脚本（双击运行）
+      - name: 创建启动脚本
         run: |
-          mkdir 报销系统_绿色版
-          xcopy /E /I .output 报销系统_绿色版\.output
-          xcopy /E /I prisma 报销系统_绿色版\prisma
-          copy package.json 报销系统_绿色版\
+          echo node .output/server/index.mjs > 启动.bat
 
-      # 🔥 关键：手动压缩成 ZIP（Release 才能找到）
-      - name: 压缩成 ZIP
-        run: Compress-Archive -Path 报销系统_绿色版 -DestinationPath 报销系统_绿色版.zip
+      # 打包完整文件
+      - name: 准备文件并压缩
+        run: |
+          mkdir 报销系统
+          xcopy /E /I .output 报销系统\.output
+          xcopy /E /I prisma 报销系统\prisma
+          copy package.json 报销系统\
+          copy 启动.bat 报销系统\
+          Compress-Archive -Path 报销系统 -DestinationPath 报销系统_绿色版.zip
 
-      # 🔥 发布 ZIP 到 Releases（这次一定成功！）
+      # 发布到 Release
       - name: 发布到 GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
           files: 报销系统_绿色版.zip
-          name: 报销系统 v1.0.0 绿色免安装版
+          name: 报销系统 v1.0.0 绿色版
           tag_name: v1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
