@@ -20,10 +20,6 @@
     ]
   },
   "bundle": {
-    "active": false,
-    "createAllTargets": false,
-    "windows": {
-      "wix": false
-    }
+    "active": false
   }
 }
