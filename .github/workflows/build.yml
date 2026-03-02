@@ -1,5 +1,4 @@
-name: 构建精简绿色版(15MB内)并发布 Releases
-on:
+name: build
   workflow_dispatch:
 
 jobs:
