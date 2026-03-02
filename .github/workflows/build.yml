@@ -1,4 +1,4 @@
-name: 编译并打包ZIP（免安装绿色版）
+name: 编译并发布到 Releases
 
 on:
   workflow_dispatch:
@@ -29,8 +29,11 @@ jobs:
       - name: 编译 Tauri 生成 exe
         run: tauri build
 
-      - name: 上传ZIP（仅单EXE）
-        uses: actions/upload-artifact@v4
+      - name: 发布 EXE 到 GitHub Releases
+        uses: softprops/action-gh-release@v2
         with:
-          name: 报销系统-绿色免安装版
-          path: src-tauri/target/release/invoice-system.exe
+          files: src-tauri/target/release/invoice-system.exe
+          name: 报销系统 v1.0.0
+          tag_name: v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
