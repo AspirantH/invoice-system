@@ -1,13 +1,13 @@
-name: 编译 Windows 桌面程序 (exe)
+name: 编译 Windows 绿色单文件 exe
 
 on:
-  workflow_dispatch:    # 手动点一下就编译
+  workflow_dispatch:    # 手动触发编译（你只需要点一下）
   push:
     branches: [main]
 
 jobs:
-  build-windows:
-    runs-on: windows-latest  # 云端用 Windows 服务器编译
+  build:
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -16,7 +16,7 @@ jobs:
         with:
           node-version: 20
 
-      - name: 安装 Rust (Tauri 必需)
+      - name: 安装 Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: x86_64-pc-windows-msvc
@@ -24,17 +24,22 @@ jobs:
       - name: 安装项目依赖
         run: npm install
 
+      - name: 安装 Tauri
+        run: npm install -g @tauri-apps/cli
+
+      - name: 初始化 Tauri（如已初始化可跳过）
+        run: npx tauri init --yes --frontend-dev npm run dev --frontend-build npm run build --dist-dir .output/public --dev-url http://localhost:3000
+
       - name: 生成 Prisma 客户端
         run: npx prisma generate
 
-      - name: 安装 Tauri CLI
-        run: npm install -g @tauri-apps/cli
+      - name: 编译 绿色单文件 exe
+        run: |
+          npm run build
+          npx tauri build --bundle compact
 
-      - name: 构建 Windows 程序
-        run: npm run tauri build
-
-      - name: 上传 Windows exe 安装包
+      - name: 上传 绿色单文件 exe
         uses: actions/upload-artifact@v4
         with:
-          name: windows-app
-          path: src-tauri/target/release/bundle/
+          name: windows-single-exe
+          path: src-tauri/target/release/bundle/msi/
