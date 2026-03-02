@@ -28,5 +28,9 @@ export default defineNuxtConfig({
         { name: 'description', content: '个人报销管理平台' }
       ]
     }
+  },
+
+  nitro: {
+    preset: "static"
   }
 })
