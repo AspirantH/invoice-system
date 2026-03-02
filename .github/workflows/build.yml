@@ -23,8 +23,8 @@ jobs:
       - name: 安装 Tauri CLI
         run: npm install -g @tauri-apps/cli
 
-      - name: 构建前端
-        run: npm run build
+      - name: 构建前端（生成 index.html）
+        run: npm run generate
 
       - name: 编译 Tauri 生成 exe
         run: tauri build
