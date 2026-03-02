@@ -1,0 +1,40 @@
+name: 编译 Windows 桌面程序 (exe)
+
+on:
+  workflow_dispatch:    # 手动点一下就编译
+  push:
+    branches: [main]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest  # 云端用 Windows 服务器编译
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 安装 Rust (Tauri 必需)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: 安装项目依赖
+        run: npm install
+
+      - name: 生成 Prisma 客户端
+        run: npx prisma generate
+
+      - name: 安装 Tauri CLI
+        run: npm install -g @tauri-apps/cli
+
+      - name: 构建 Windows 程序
+        run: npm run tauri build
+
+      - name: 上传 Windows exe 安装包
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-app
+          path: src-tauri/target/release/bundle/
