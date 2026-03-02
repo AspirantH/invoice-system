@@ -1,34 +1,28 @@
 {
-  "$schema": "../node_modules/@tauri-apps/cli/schema.json",
+  "$schema": "https://schema.tauri.app/config/2",
   "productName": "报销系统",
   "version": "1.0.0",
-  "identifier": "com.invoice.system",
+  "identifier": "com.invoice.app",
   "build": {
     "beforeBuildCommand": "npm run build",
     "beforeDevCommand": "npm run dev",
     "frontendDist": "../.output/public",
     "devUrl": "http://localhost:3000"
   },
-  "bundle": {
-    "active": true,
-    "targets": ["exe"],
-    "compact": true,
-    "windows": {
-      "webviewInstallMode": "embed"
-    }
-  },
   "app": {
     "windows": [
       {
         "title": "个人报销管理系统",
-        "width": 1280,
-        "height": 800,
+        "width": 1200,
+        "height": 700,
         "resizable": true,
         "fullscreen": false
       }
     ]
   },
-  "security": {
-    "csp": null
+  "bundle": {
+    "active": true,
+    "targets": [],
+    "windows": {}
   }
 }
