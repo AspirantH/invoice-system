@@ -21,6 +21,8 @@
   },
   "bundle": {
     "active": true,
-    "windows": {}
-  }
+    "windows": {},
+    "icon": []
+  },
+  "package": {}
 }
