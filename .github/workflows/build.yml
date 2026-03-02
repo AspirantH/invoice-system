@@ -1,4 +1,4 @@
-name: 编译并发布到 Releases
+name: 编译Windows绿色版(功能完整)
 
 on:
   workflow_dispatch:
@@ -14,26 +14,19 @@ jobs:
         with:
           node-version: 20
 
-      - name: 安装 Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: 安装项目依赖
+      - name: 安装依赖
         run: npm install
 
-      - name: 安装 Tauri CLI
-        run: npm install -g @tauri-apps/cli
-
-      - name: 构建前端
+      - name: 构建项目
         run: npm run build
 
-      - name: 编译 Tauri 生成 exe
-        run: tauri build
-
-      - name: 发布 EXE 到 GitHub Releases
-        uses: softprops/action-gh-release@v2
+      - name: 打包完整程序
+        uses: actions/upload-artifact@v4
         with:
-          files: src-tauri/target/release/invoice-system.exe
-          name: 报销系统 v1.0.0
-          tag_name: v1.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: 报销系统-完整功能版
+          path: |
+            .output
+            node_modules
+            package.json
+            prisma
+            public
