@@ -1,4 +1,4 @@
-name: 构建Windows终极绿色版(自带Node+数据库正常)
+name: 构建绿色版
 on:
   workflow_dispatch:
 
@@ -8,7 +8,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 设置 Node.js 20
+      - name: 设置 Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -16,12 +16,8 @@ jobs:
       - name: 安装依赖
         run: npm install
 
-      - name: 生成 Prisma 客户端
+      - name: 生成数据库
         run: npx prisma generate
-
-      # 🔥 关键修复：初始化数据库（必须执行！）
-      - name: 初始化数据库
-        run: npx prisma db push
 
       - name: 构建项目
         run: npm run build
@@ -31,25 +27,17 @@ jobs:
           "@echo off" > 启动.bat
           "node.exe .output/server/index.mjs" >> 启动.bat
 
-      - name: 拷贝 node.exe
+      - name: 复制 node.exe
         run: Copy-Item (Get-Command node).Source ./
 
-      # 🔥 关键修复：把数据库文件一起打包！
-      - name: 打包完整文件
-        run: Compress-Archive -Path @(
-          "node.exe",
-          "启动.bat",
-          ".output",
-          "prisma",
-          "package.json",
-          "dev.db"          # 数据库文件！
-          ) 报销系统_绿色终极版.zip
+      - name: 打包压缩
+        run: Compress-Archive -Path @("node.exe","启动.bat",".output","prisma","package.json","dev.db") 报销系统.zip
 
-      - name: 发布到 GitHub Releases
+      - name: 发布到 Releases
         uses: softprops/action-gh-release@v2
         with:
-          files: 报销系统_绿色终极版.zip
-          name: 报销系统 v1.0.0 完美绿色版
+          files: 报销系统.zip
+          name: 报销系统绿色版
           tag_name: v1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
