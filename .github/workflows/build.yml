@@ -1,6 +1,6 @@
-name: 构建
+name: 构建完整独立绿色版(自带Node)
 on:
-  workflow_dispatch:
+  workflow_dispatch
 
 jobs:
   build:
@@ -10,6 +10,7 @@ jobs:
 
       - name: 设置 Node.js 20
         uses: actions/setup-node@v4
+        id: setup-node
         with:
           node-version: 20
 
@@ -22,28 +23,32 @@ jobs:
       - name: 构建项目
         run: npm run build
 
-      # 创建启动脚本
+      # 🔥 修复：PowerShell 正确生成 bat 文件
       - name: 创建启动脚本
-        run: echo @node.exe .output/server/index.mjs > 启动.bat
+        run: |
+          "@echo off" > 启动.bat
+          "node.exe .output/server/index.mjs" >> 启动.bat
 
-      # 复制 Node.exe 到打包目录（关键！）
-      - name: 复制 Node 运行时
-        uses: actions/upload-artifact@v4
-        with:
-          name: 报销系统
-          path: |
-            .output
-            prisma
-            package.json
-            启动.bat
-            ${{ steps.setup-node.outputs.node-path }}/node.exe
+      # 复制 Node.exe + 全部文件
+      - name: 准备完整绿色包
+        run: |
+          mkdir 发布包
+          copy "${{ steps.setup-node.outputs.node-path }}" 发布包\
+          xcopy /E /I .output 发布包\.output
+          xcopy /E /I prisma 发布包\prisma
+          copy package.json 发布包\
+          copy 启动.bat 发布包\
 
-      # 发布到 Release
+      # 压缩 ZIP
+      - name: 压缩成最终 ZIP
+        run: Compress-Archive -Path 发布包 -DestinationPath 报销系统_绿色终极版.zip
+
+      # 发布到 Releases
       - name: 发布到 GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
-          files: "报销系统.zip"
-          name: 报销系统 v1.0.0
+          files: 报销系统_绿色终极版.zip
+          name: 报销系统 v1.0.0 绿色免安装版
           tag_name: v1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
