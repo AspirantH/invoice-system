@@ -1,4 +1,4 @@
-name: 构建Windows绿色版 并发布到Releases
+name: 构建绿色版并发布到 Releases
 on:
   workflow_dispatch:
 
@@ -22,19 +22,23 @@ jobs:
       - name: 构建项目
         run: npm run build
 
-      - name: 打包精简绿色版
-        uses: actions/upload-artifact@v4
-        with:
-          name: 报销系统_绿色版
-          path: |
-            .output
-            prisma
-            package.json
+      # 🔥 关键：先把需要的文件移动到统一文件夹
+      - name: 准备发布文件
+        run: |
+          mkdir 报销系统_绿色版
+          xcopy /E /I .output 报销系统_绿色版\.output
+          xcopy /E /I prisma 报销系统_绿色版\prisma
+          copy package.json 报销系统_绿色版\
 
+      # 🔥 关键：手动压缩成 ZIP（Release 才能找到）
+      - name: 压缩成 ZIP
+        run: Compress-Archive -Path 报销系统_绿色版 -DestinationPath 报销系统_绿色版.zip
+
+      # 🔥 发布 ZIP 到 Releases（这次一定成功！）
       - name: 发布到 GitHub Releases
-        uses: softprops/action-gh-release@v2  # 👈 这里修复正确了
+        uses: softprops/action-gh-release@v2
         with:
-          files: "报销系统_绿色版.zip"
+          files: 报销系统_绿色版.zip
           name: 报销系统 v1.0.0 绿色免安装版
           tag_name: v1.0.0
         env:
