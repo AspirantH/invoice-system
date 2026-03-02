@@ -2,10 +2,14 @@
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
+
+  // 🔥 关闭 SSR 但保留服务端 API（关键！）
   ssr: false,
+
   devServer: {
     port: 3004,
   },
+
   modules: ['@nuxtjs/tailwindcss'],
 
   css: ['~/assets/css/main.css'],
@@ -31,6 +35,6 @@ export default defineNuxtConfig({
   },
 
   nitro: {
-    preset: "static"
+    preset: "node-server"
   }
 })
