@@ -1,5 +1,4 @@
-name: 编译Windows绿色版(功能完整)
-
+name: 构建 Windows 绿色免安装版
 on:
   workflow_dispatch:
 
@@ -17,16 +16,19 @@ jobs:
       - name: 安装依赖
         run: npm install
 
+      - name: 生成 Prisma 客户端
+        run: npx prisma generate
+
       - name: 构建项目
         run: npm run build
 
-      - name: 打包完整程序
+      - name: 打包完整绿色版
         uses: actions/upload-artifact@v4
         with:
-          name: 报销系统-完整功能版
+          name: 报销系统_绿色版
           path: |
             .output
             node_modules
-            package.json
             prisma
+            package.json
             public
