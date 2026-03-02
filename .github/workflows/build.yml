@@ -1,4 +1,4 @@
-name: 编译Windows绿色单文件exe
+name: 编译 Windows 绿色单文件 exe
 
 on:
   workflow_dispatch:
@@ -9,28 +9,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 设置Node.js
+      - name: 设置 Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: 安装Rust
+      - name: 安装 Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: 安装依赖
+      - name: 安装项目依赖
         run: npm install
 
-      - name: 安装tauri
+      - name: 安装 Tauri CLI
         run: npm install -g @tauri-apps/cli
 
-      - name: 构建前端
+      - name: 构建前端项目
         run: npm run build
 
-      - name: 生成单文件exe
+      - name: 编译 Windows 单文件程序
         run: tauri build
 
-      - name: 上传成品
+      - name: 上传绿色单文件 exe
         uses: actions/upload-artifact@v4
         with:
-          name: invoice-system-windows-single-exe
-          path: src-tauri/target/release/bundle/exe/
+          name: windows-single-exe
+          path: src-tauri/target/release/
