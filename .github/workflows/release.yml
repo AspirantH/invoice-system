@@ -1,4 +1,4 @@
-name: 最终绿色版(修复全部500)
+name: 最终完美绿色版
 on:
   workflow_dispatch:
 
@@ -7,33 +7,23 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: 安装 Node.js
+      - name: 安装Node
         uses: actions/setup-node@v4
-        with:
-          node-version: 20
+        with: {node-version: 20}
 
-      - name: 安装依赖
-        run: npm install
-
-      - name: 生成 Prisma
-        run: npx prisma generate
-
-      - name: 构建
-        run: npm run build
+      - run: npm install
+      - run: npx prisma generate
+      - run: npm run build
 
       - name: 创建启动脚本
         run: |
           "@echo off" > 启动.bat
           "node.exe .output/server/index.mjs" >> 启动.bat
 
-      - name: 复制 node.exe
-        run: Copy-Item (Get-Command node).Source ./
+      - run: Copy-Item (Get-Command node).Source ./
+      - run: Compress-Archive -Path @("node.exe","启动.bat",".output","prisma","package.json") 报销系统.zip
 
-      - name: 打包
-        run: Compress-Archive -Path @("node.exe","启动.bat",".output","prisma","package.json") 报销系统.zip
-
-      - name: 上传 Release
+      - name: 发布
         uses: softprops/action-gh-release@v1
         with:
           files: 报销系统.zip
