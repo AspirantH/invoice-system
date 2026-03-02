@@ -20,9 +20,10 @@
     ]
   },
   "bundle": {
-    "active": true,
+    "active": false,
+    "createAllTargets": false,
     "windows": {
-      "iconPath": "icons/icon.ico"
+      "wix": false
     }
   }
 }
