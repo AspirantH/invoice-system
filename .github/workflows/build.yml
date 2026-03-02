@@ -1,6 +1,6 @@
-name: 构建完整独立绿色版(自带Node)
+name: 构建Windows终极绿色版(自带Node)
 on:
-  workflow_dispatch
+  workflow_dispatch:
 
 jobs:
   build:
@@ -10,7 +10,6 @@ jobs:
 
       - name: 设置 Node.js 20
         uses: actions/setup-node@v4
-        id: setup-node
         with:
           node-version: 20
 
@@ -23,27 +22,21 @@ jobs:
       - name: 构建项目
         run: npm run build
 
-      # 🔥 修复：PowerShell 正确生成 bat 文件
-      - name: 创建启动脚本
+      # ✅ 创建启动脚本
+      - name: 创建 启动.bat
         run: |
           "@echo off" > 启动.bat
           "node.exe .output/server/index.mjs" >> 启动.bat
 
-      # 复制 Node.exe + 全部文件
-      - name: 准备完整绿色包
-        run: |
-          mkdir 发布包
-          copy "${{ steps.setup-node.outputs.node-path }}" 发布包\
-          xcopy /E /I .output 发布包\.output
-          xcopy /E /I prisma 发布包\prisma
-          copy package.json 发布包\
-          copy 启动.bat 发布包\
+      # ✅ 直接拷贝系统里的 node.exe 到当前目录
+      - name: 拷贝 Node 运行环境
+        run: Copy-Item (Get-Command node).Source ./
 
-      # 压缩 ZIP
-      - name: 压缩成最终 ZIP
-        run: Compress-Archive -Path 发布包 -DestinationPath 报销系统_绿色终极版.zip
+      # ✅ 打包所有文件（自带node，用户不用装任何环境）
+      - name: 压缩成 ZIP
+        run: Compress-Archive -Path @("node.exe","启动.bat",".output","prisma","package.json") 报销系统_绿色终极版.zip
 
-      # 发布到 Releases
+      # ✅ 发布到 Releases
       - name: 发布到 GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
