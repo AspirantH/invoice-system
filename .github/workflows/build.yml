@@ -1,4 +1,4 @@
-name: 构建完整绿色版并发布到Releases
+name: 构建
 on:
   workflow_dispatch:
 
@@ -22,27 +22,28 @@ jobs:
       - name: 构建项目
         run: npm run build
 
-      # 创建启动脚本（双击运行）
+      # 创建启动脚本
       - name: 创建启动脚本
-        run: |
-          echo node .output/server/index.mjs > 启动.bat
+        run: echo @node.exe .output/server/index.mjs > 启动.bat
 
-      # 打包完整文件
-      - name: 准备文件并压缩
-        run: |
-          mkdir 报销系统
-          xcopy /E /I .output 报销系统\.output
-          xcopy /E /I prisma 报销系统\prisma
-          copy package.json 报销系统\
-          copy 启动.bat 报销系统\
-          Compress-Archive -Path 报销系统 -DestinationPath 报销系统_绿色版.zip
+      # 复制 Node.exe 到打包目录（关键！）
+      - name: 复制 Node 运行时
+        uses: actions/upload-artifact@v4
+        with:
+          name: 报销系统
+          path: |
+            .output
+            prisma
+            package.json
+            启动.bat
+            ${{ steps.setup-node.outputs.node-path }}/node.exe
 
       # 发布到 Release
       - name: 发布到 GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
-          files: 报销系统_绿色版.zip
-          name: 报销系统 v1.0.0 绿色版
+          files: "报销系统.zip"
+          name: 报销系统 v1.0.0
           tag_name: v1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
