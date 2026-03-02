@@ -1,7 +1,10 @@
-name: 编译 Windows 绿色单文件 exe
+name: 编译并发布到 Releases
 
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - "v*"
 
 jobs:
   build:
@@ -23,11 +26,13 @@ jobs:
       - name: 构建前端
         run: npm run build
 
-      - name: 编译 Tauri 程序
+      - name: 编译 Tauri
         run: tauri build
 
-      - name: 上传成品exe（仅单个文件）
-        uses: actions/upload-artifact@v4
+      # 🔥 发布
+      - name: 发布
+        uses: softprops/action-gh-release@v2
         with:
-          name: invoice-system-exe
-          path: src-tauri/target/release/invoice-system.exe
+          files: src-tauri/target/release/invoice-system.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
