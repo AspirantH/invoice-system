@@ -3,7 +3,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
 
-  // 🔥 强制 SPA 静态页面（给 Tauri 用）
+  // 必须关闭，桌面端只能用纯前端
   ssr: false,
 
   devServer: {
@@ -23,22 +23,26 @@ export default defineNuxtConfig({
   },
 
   app: {
+    baseURL: './',
     head: {
       title: '个人报销管理系统',
       meta: [
         { charset: 'utf-8' },
-        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'description', content: '个人报销管理平台' }
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' }
       ]
     }
   },
 
+  // 🔥 核心修复：强制生成前端 index.html
   nitro: {
-    // 生成纯前端 index.html
+    preset: 'static',
     output: {
-      dir: '.output/public'
-    },
-    // 保留 API 服务
-    preset: 'node-server'
+      publicDir: '.output/public'
+    }
+  },
+
+  // 🔥 关键：关闭服务端渲染，只打包前端页面
+  build: {
+    ssr: false
   }
 })
