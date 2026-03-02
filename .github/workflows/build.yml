@@ -1,4 +1,4 @@
-name: 构建 Windows 绿色版并发布到 Releases
+name: 构建精简绿色版(15MB内)并发布 Releases
 on:
   workflow_dispatch:
 
@@ -13,8 +13,8 @@ jobs:
         with:
           node-version: 20
 
-      - name: 安装依赖
-        run: npm install
+      - name: 安装依赖（仅生产环境）
+        run: npm install --omit=dev
 
       - name: 生成 Prisma 客户端
         run: npx prisma generate
@@ -22,22 +22,20 @@ jobs:
       - name: 构建项目
         run: npm run build
 
-      - name: 打包完整绿色版
+      - name: 精简打包（仅15MB内）
         uses: actions/upload-artifact@v4
         with:
-          name: 报销系统_绿色版
+          name: 报销系统_绿色精简版
           path: |
             .output
-            node_modules
             prisma
             package.json
-            public
 
-      - name: 发布到 GitHub Releases
+      - name: 发布到 Releases
         uses: softprops/action-gh-release@v2
         with:
-          files: 报销系统_绿色版.zip
-          name: 报销系统 绿色免安装版
+          files: "报销系统_绿色精简版.zip"
+          name: 报销系统 v1.0.0 绿色免安装版
           tag_name: v1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
