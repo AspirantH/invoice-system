@@ -1,4 +1,4 @@
-name: 编译并打包ZIP（免安装单文件）
+name: 编译并打包ZIP（免安装绿色版）
 
 on:
   workflow_dispatch:
@@ -29,9 +29,8 @@ jobs:
       - name: 编译 Tauri 生成 exe
         run: tauri build
 
-      - name: 上传ZIP（免安装 解压即用）
+      - name: 上传ZIP（仅单EXE）
         uses: actions/upload-artifact@v4
         with:
-          name: 报销系统-绿色版
-          path: |
-            src-tauri/target/release/invoice-system.exe
+          name: 报销系统-绿色免安装版
+          path: src-tauri/target/release/invoice-system.exe
