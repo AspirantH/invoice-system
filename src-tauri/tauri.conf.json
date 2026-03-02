@@ -20,9 +20,6 @@
     ]
   },
   "bundle": {
-    "active": true,
-    "windows": {},
-    "icon": []
-  },
-  "package": {}
+    "active": true
+  }
 }
