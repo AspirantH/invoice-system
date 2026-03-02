@@ -1,9 +1,7 @@
-name: 编译 Windows 绿色单文件 exe
+name: 编译Windows绿色单文件exe
 
 on:
-  workflow_dispatch:    # 手动触发编译（你只需要点一下）
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -11,35 +9,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 安装 Node.js 20
+      - name: 设置Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: 安装 Rust
+      - name: 安装Rust
         uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: x86_64-pc-windows-msvc
 
-      - name: 安装项目依赖
+      - name: 安装依赖
         run: npm install
 
-      - name: 安装 Tauri
+      - name: 安装tauri
         run: npm install -g @tauri-apps/cli
 
-      - name: 初始化 Tauri（如已初始化可跳过）
-        run: npx tauri init --yes --frontend-dev npm run dev --frontend-build npm run build --dist-dir .output/public --dev-url http://localhost:3000
+      - name: 构建前端
+        run: npm run build
 
-      - name: 生成 Prisma 客户端
-        run: npx prisma generate
+      - name: 生成单文件exe
+        run: tauri build
 
-      - name: 编译 绿色单文件 exe
-        run: |
-          npm run build
-          npx tauri build --bundle compact
-
-      - name: 上传 绿色单文件 exe
+      - name: 上传成品
         uses: actions/upload-artifact@v4
         with:
-          name: windows-single-exe
-          path: src-tauri/target/release/bundle/msi/
+          name: invoice-system-windows-single-exe
+          path: src-tauri/target/release/bundle/exe/
