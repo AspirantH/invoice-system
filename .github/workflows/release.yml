@@ -1,4 +1,4 @@
-name: 构建绿色版
+name: 构建Windows终极绿色版(自带Node)
 on:
   workflow_dispatch:
 
@@ -8,7 +8,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 设置 Node.js
+      - name: 设置 Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -16,7 +16,7 @@ jobs:
       - name: 安装依赖
         run: npm install
 
-      - name: 生成数据库
+      - name: 生成 Prisma 客户端
         run: npx prisma generate
 
       - name: 构建项目
@@ -30,8 +30,15 @@ jobs:
       - name: 复制 node.exe
         run: Copy-Item (Get-Command node).Source ./
 
+      # 🔥 修复：只压缩真实存在的文件
       - name: 打包压缩
-        run: Compress-Archive -Path @("node.exe","启动.bat",".output","prisma","package.json","dev.db") 报销系统.zip
+        run: Compress-Archive -Path @(
+          "node.exe",
+          "启动.bat",
+          ".output",
+          "prisma",
+          "package.json"
+        ) 报销系统.zip
 
       - name: 发布到 Releases
         uses: softprops/action-gh-release@v2
