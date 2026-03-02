@@ -1,0 +1,44 @@
+{
+  "build": {
+    "beforeBuildCommand": "npm run build",
+    "beforeDevCommand": "npm run dev",
+    "devPath": "http://localhost:3000",
+    "distDir": "../.output/public"
+  },
+  "package": {
+    "productName": "invoice-system",
+    "version": "1.0.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "shell": {
+        "all": false
+      },
+      "fs": {
+        "read": true,
+        "write": true
+      }
+    },
+    "bundle": {
+      "active": true,
+      "targets": ["exe"],
+      "compact": true,
+      "windows": {
+        "webviewInstallMode": "embed"
+      }
+    },
+    "windows": [
+      {
+        "fullscreen": false,
+        "resizable": true,
+        "title": "invoice-system",
+        "width": 1280,
+        "height": 800
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  }
+}
