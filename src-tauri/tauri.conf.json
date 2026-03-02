@@ -4,10 +4,10 @@
   "version": "1.0.0",
   "identifier": "com.invoice.system",
   "build": {
-    "beforeBuildCommand": "npm run generate",
+    "beforeBuildCommand": "npm run build",
     "beforeDevCommand": "npm run dev",
     "frontendDist": "../.output/public",
-    "devUrl": "http://localhost:3000"
+    "devUrl": "http://localhost:3004"
   },
   "app": {
     "windows": [
