@@ -1,4 +1,4 @@
-name: 构建 Windows 绿色免安装版
+name: 构建 Windows 绿色版并发布到 Releases
 on:
   workflow_dispatch:
 
@@ -32,3 +32,12 @@ jobs:
             prisma
             package.json
             public
+
+      - name: 发布到 GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          files: 报销系统_绿色版.zip
+          name: 报销系统 绿色免安装版
+          tag_name: v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
