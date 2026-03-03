@@ -27,7 +27,7 @@ jobs:
 
       - name: Build Frontend (Optional)
         # 如果你的项目需要先 build 前端（如 Vue/React），请取消下面注释
-        # run: npm run build 
+        run: npm run build 
 
       - name: Package to Executable
         run: |
