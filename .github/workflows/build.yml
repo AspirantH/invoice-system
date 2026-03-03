@@ -1,0 +1,234 @@
+name: Windows Green Build
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20.11.1'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download Portable Node.js (Green Version)
+      shell: pwsh
+      run: |
+        $NodeVersion = $env:NODE_VERSION
+        $NodeUrl = "https://nodejs.org/dist/v$NodeVersion/node-v$NodeVersion-win-x64.zip"
+        $OutputPath = "$env:RUNNER_TEMP\nodejs.zip"
+        
+        Write-Host "Downloading Node.js v$NodeVersion (portable)..."
+        Invoke-WebRequest -Uri $NodeUrl -OutFile $OutputPath -UseBasicParsing
+        
+        Write-Host "Extracting Node.js..."
+        Expand-Archive -Path $OutputPath -DestinationPath "$env:RUNNER_TEMP\nodejs" -Force
+        
+        $NodeDir = "$env:RUNNER_TEMP\nodejs\node-v$NodeVersion-win-x64"
+        Write-Host "Node.js location: $NodeDir"
+        
+        # Add to PATH
+        "$NodeDir" | Out-File -FilePath $env:GITHUB_PATH -Append
+        "$env:GITHUB_PATH"
+        
+        # Verify
+        & "$NodeDir\node.exe" --version
+        & "$NodeDir\npm.cmd" --version
+        
+        # Store path for later steps
+        "NODE_DIR=$NodeDir" | Out-File -FilePath $env:GITHUB_ENV -Append
+    
+    - name: Setup Node.js environment (portable)
+      shell: pwsh
+      run: |
+        $NodeDir = $env:NODE_DIR
+        
+        # Configure npm to use portable node
+        & "$NodeDir\npm.cmd" config set prefix "$env:RUNNER_TEMP\npm-global"
+        
+        # Create npm global directory
+        New-Item -ItemType Directory -Force -Path "$env:RUNNER_TEMP\npm-global"
+        
+        # Add npm global to PATH
+        "$env:RUNNER_TEMP\npm-global" | Out-File -FilePath $env:GITHUB_PATH -Append
+        
+        Write-Host "Node.js setup complete"
+        & "$NodeDir\node.exe" --version
+        & "$NodeDir\npm.cmd" --version
+    
+    - name: Cache node_modules
+      uses: actions/cache@v4
+      id: npm-cache
+      with:
+        path: |
+          node_modules
+          ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+    
+    - name: Install dependencies
+      shell: pwsh
+      run: |
+        $NodeDir = $env:NODE_DIR
+        & "$NodeDir\npm.cmd" ci
+      env:
+        npm_config_cache: ${{ runner.temp }}/npm-cache
+    
+    - name: Generate Prisma Client
+      shell: pwsh
+      run: |
+        $NodeDir = $env:NODE_DIR
+        & "$NodeDir\npx.cmd" prisma generate
+    
+    - name: Build Nuxt Application
+      shell: pwsh
+      run: |
+        $NodeDir = $env:NODE_DIR
+        & "$NodeDir\npm.cmd" run build
+      env:
+        NUXT_TELEMETRY_DISABLED: 1
+        NODE_OPTIONS: --max-old-space-size=4096
+    
+    - name: Prepare Green Package
+      shell: pwsh
+      run: |
+        $PackageName = "invoice-system-windows"
+        $OutputDir = "$env:GITHUB_WORKSPACE\dist\$PackageName"
+        $NodeDir = $env:NODE_DIR
+        
+        Write-Host "Creating green package..."
+        
+        # Create output directory structure
+        New-Item -ItemType Directory -Force -Path "$OutputDir"
+        New-Item -ItemType Directory -Force -Path "$OutputDir\data"
+        
+        # Copy built application (.output directory)
+        if (Test-Path ".output") {
+            Copy-Item -Path ".output" -Destination "$OutputDir\" -Recurse -Force
+            Write-Host "Copied .output directory"
+        } else {
+            Write-Error ".output directory not found!"
+            exit 1
+        }
+        
+        # Copy essential runtime files
+        Copy-Item -Path "package.json" -Destination "$OutputDir\" -Force
+        if (Test-Path "prisma") {
+            Copy-Item -Path "prisma" -Destination "$OutputDir\" -Recurse -Force
+            Write-Host "Copied prisma directory"
+        }
+        
+        # Copy node.exe (portable Node.js runtime)
+        Copy-Item -Path "$NodeDir\node.exe" -Destination "$OutputDir\" -Force
+        Write-Host "Copied node.exe"
+        
+        # Copy necessary DLLs for Node.js
+        $Dlls = @("vcruntime140.dll", "vcruntime140_1.dll", "msvcp140.dll")
+        foreach ($dll in $Dlls) {
+            $DllPath = "$NodeDir\$dll"
+            if (Test-Path $DllPath) {
+                Copy-Item -Path $DllPath -Destination "$OutputDir\" -Force
+                Write-Host "Copied $dll"
+            }
+        }
+        
+        # Create startup batch script
+        $BatchContent = @"
+@echo off
+chcp 65001 >nul
+title 个人报销管理系统
+echo ==========================================
+echo    个人报销管理系统 - Invoice System
+echo ==========================================
+echo.
+
+REM Set data directory
+set "DATA_DIR=%~dp0data"
+set "DATABASE_URL=file:%DATA_DIR%\dev.db"
+
+REM Check if database exists, if not initialize it
+if not exist "%DATA_DIR%\dev.db" (
+    echo 首次运行，正在初始化数据库...
+    if exist "prisma\schema.prisma" (
+        "%~dp0node.exe" "%~dp0.output\server\node_modules\prisma\build\index.js" db push --schema="%~dp0prisma\schema.prisma" --accept-data-loss
+    )
+    echo 数据库初始化完成！
+    echo.
+)
+
+echo 启动服务中...
+echo 访问地址: http://localhost:3000
+echo.
+echo 按 Ctrl+C 停止服务
+echo.
+
+REM Start the server
+"%~dp0node.exe" "%~dp0.output\server\index.mjs"
+
+pause
+"@
+        $BatchContent | Out-File -FilePath "$OutputDir\启动系统.bat" -Encoding UTF8
+        
+        # Create alternative PowerShell startup script
+        $PsContent = @'
+#Requires -Version 5.1
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$Host.UI.RawUI.WindowTitle = "个人报销管理系统"
+
+$scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
+$dataDir = Join-Path $scriptPath "data"
+$env:DATABASE_URL = "file:$dataDir/dev.db"
+
+Write-Host "==========================================" -ForegroundColor Cyan
+Write-Host "   个人报销管理系统 - Invoice System" -ForegroundColor Cyan
+Write-Host "==========================================" -ForegroundColor Cyan
+Write-Host ""
+
+# Initialize database if needed
+if (-not (Test-Path "$dataDir/dev.db")) {
+    Write-Host "首次运行，正在初始化数据库..." -ForegroundColor Yellow
+    $prismaSchema = Join-Path $scriptPath "prisma/schema.prisma"
+    if (Test-Path $prismaSchema) {
+        & (Join-Path $scriptPath "node.exe") (Join-Path $scriptPath ".output/server/node_modules/prisma/build/index.js") db push --schema=$prismaSchema --accept-data-loss
+    }
+    Write-Host "数据库初始化完成！" -ForegroundColor Green
+    Write-Host ""
+}
+
+Write-Host "启动服务中..." -ForegroundColor Green
+Write-Host "访问地址: " -NoNewline
+Write-Host "http://localhost:3000" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "按 Ctrl+C 停止服务" -ForegroundColor Gray
+Write-Host ""
+
+$nodeExe = Join-Path $scriptPath "node.exe"
+$serverScript = Join-Path $scriptPath ".output/server/index.mjs"
+& $nodeExe $serverScript
+'@
+        $PsContent | Out-File -FilePath "$OutputDir\启动系统.ps1" -Encoding UTF8
+        
+        # Create README for green package
+        $ReadmeContent = @"
+# 个人报销管理系统 - Windows 绿色版
+
+## 快速启动
+
+### 方法一：双击启动（推荐）
+直接双击运行 `启动系统.bat` 文件
+
+### 方法二：PowerShell 启动
+右键点击 `启动系统.ps1`，选择"使用 PowerShell 运行"
+
+### 方法三：命令行启动
+```cmd
+启动系统.bat
