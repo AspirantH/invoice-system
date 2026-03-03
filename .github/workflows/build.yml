@@ -1,0 +1,54 @@
+name: Build and Release Windows Portable
+
+on:
+  push:
+    tags:
+      - 'v*' # 当推送以 v 开头的标签时触发，如 v1.0.0
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16' # 根据项目需求选择版本
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm install
+          npm install -g pkg
+
+      - name: Build Frontend (Optional)
+        # 如果你的项目需要先 build 前端（如 Vue/React），请取消下面注释
+        # run: npm run build 
+
+      - name: Package to Executable
+        run: |
+          # 将 index.js 替换为你项目的实际入口文件名
+          pkg . --targets node16-win-x64 --output invoice-system.exe
+
+      - name: Prepare Release Folder
+        run: |
+          mkdir release
+          move invoice-system.exe release/
+          # 如果有其他必备文件（如 config.json, database.db），也一起移动进去
+          # copy config.default.json release/config.json
+          
+      - name: Zip Release
+        run: |
+          Compress-Archive -Path release/* -DestinationPath invoice-system-windows-x64.zip
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: invoice-system-windows-x64.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
